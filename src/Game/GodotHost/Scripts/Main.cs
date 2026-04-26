@@ -1,12 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
 using Astroblock.Core.Coords;
 using Astroblock.Core.Events;
 using Astroblock.Core.Interfaces;
+using Astroblock.Gravity.Queries;
+using Astroblock.Physics.Character;
 using Astroblock.World;
 using Astroblock.World.Generation;
 using Astroblock.World.Meshing;
 using Astroblock.World.Storage;
 using Astroblock.World.Streaming;
 using Godot;
+using GVec3 = Godot.Vector3;
+using NVec2 = System.Numerics.Vector2;
+using NVec3 = System.Numerics.Vector3;
 
 namespace Astroblock.Game.GodotHost.Scripts;
 
@@ -17,6 +25,7 @@ public partial class Main : Node3D
     [Export] public NodePath DebugLabelNodePath { get; set; } = new("Hud/DebugLabel");
     [Export] public int StreamingRadius { get; set; } = 2;
     [Export] public int WorldSeed { get; set; } = 1337;
+    [Export] public float GravityStrength { get; set; } = 9.81f;
 
     private readonly Dictionary<ChunkCoord3, MeshInstance3D> _chunkInstances = new();
     private readonly List<IDisposable> _subscriptions = new();
@@ -25,6 +34,8 @@ public partial class Main : Node3D
     private IChunkStore? _chunkStore;
     private WorldCoordinator? _worldCoordinator;
     private InMemoryEventBus? _eventBus;
+    private IGravityFieldSolver? _gravitySolver;
+    private SimpleCharacterMotor? _characterMotor;
     private Node3D? _playerNode;
     private Node3D? _chunkRoot;
     private Label? _debugLabel;
@@ -52,12 +63,40 @@ public partial class Main : Node3D
         _subscriptions.Add(_eventBus.Subscribe<ChunkLoaded>(OnChunkLoaded));
         _subscriptions.Add(_eventBus.Subscribe<ChunkUnloaded>(OnChunkUnloaded));
 
+        var initialPosition = ToNumerics(_playerNode.GlobalPosition);
+        _characterMotor = new SimpleCharacterMotor(
+            new CharacterMotorState(
+                Position: initialPosition,
+                Velocity: NVec3.Zero,
+                Up: NVec3.UnitY,
+                IsGrounded: true,
+                ThrusterModeEnabled: false));
+
+        _gravitySolver = new SimplePlanetaryGravityFieldSolver(
+            sourcePosition: NVec3.Zero,
+            gravitationalParameter: GravityStrength,
+            minimumDistance: 1f);
+
+        Input.MouseMode = Input.MouseModeEnum.Captured;
         RunWorldTick();
     }
 
     public override void _Process(double delta)
     {
         RunWorldTick();
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        if (_playerNode is null || _characterMotor is null || _gravitySolver is null)
+        {
+            return;
+        }
+
+        var gravity = _gravitySolver.SampleGravity(_characterMotor.State.Position);
+        var motorInput = SampleMotorInput();
+        _characterMotor.Simulate((float)delta, motorInput, gravity);
+        ApplyMotorState(_characterMotor.State);
     }
 
     public override void _ExitTree()
@@ -87,6 +126,41 @@ public partial class Main : Node3D
         _worldCoordinator.Update(anchor);
 
         _debugLabel?.SetText($"Loaded chunks: {_chunkInstances.Count} | Current chunk: ({_currentChunkCoord.X}, {_currentChunkCoord.Y}, {_currentChunkCoord.Z})");
+    }
+
+    private static CharacterMotorInput SampleMotorInput()
+    {
+        var moveX = (Input.IsPhysicalKeyPressed(Key.D) ? 1f : 0f) - (Input.IsPhysicalKeyPressed(Key.A) ? 1f : 0f);
+        var moveY = (Input.IsPhysicalKeyPressed(Key.W) ? 1f : 0f) - (Input.IsPhysicalKeyPressed(Key.S) ? 1f : 0f);
+        var jumpPressed = Input.IsPhysicalKeyPressed(Key.Space) || Input.IsMouseButtonPressed(MouseButton.Left);
+
+        return new CharacterMotorInput(
+            MoveAxes: new NVec2(moveX, moveY),
+            JumpPressed: jumpPressed,
+            ThrusterAxes: NVec3.Zero);
+    }
+
+    private void ApplyMotorState(CharacterMotorState state)
+    {
+        if (_playerNode is null)
+        {
+            return;
+        }
+
+        _playerNode.GlobalPosition = ToGodot(state.Position);
+
+        var currentForward = -_playerNode.GlobalBasis.Z;
+        var up = ToGodot(state.Up);
+        var flattenedForward = (currentForward - (up * currentForward.Dot(up))).Normalized();
+        if (flattenedForward.LengthSquared() <= float.Epsilon)
+        {
+            flattenedForward = _playerNode.GlobalBasis.X.Cross(up).Normalized();
+        }
+
+        if (flattenedForward.LengthSquared() > float.Epsilon)
+        {
+            _playerNode.LookAt(_playerNode.GlobalPosition + flattenedForward, up);
+        }
     }
 
     private void OnChunkLoaded(ChunkLoaded chunkLoaded)
@@ -135,12 +209,12 @@ public partial class Main : Node3D
 
         foreach (var position in meshData.Positions)
         {
-            positions.Add(new Vector3(position.X, position.Y, position.Z));
+            positions.Add(new GVec3(position.X, position.Y, position.Z));
         }
 
         foreach (var normal in meshData.Normals)
         {
-            normals.Add(new Vector3(normal.X, normal.Y, normal.Z));
+            normals.Add(new GVec3(normal.X, normal.Y, normal.Z));
         }
 
         foreach (var index in meshData.Indices)
@@ -174,4 +248,10 @@ public partial class Main : Node3D
             CastShadow = GeometryInstance3D.ShadowCastingSetting.On,
         };
     }
+
+    private static NVec3 ToNumerics(GVec3 value)
+        => new(value.X, value.Y, value.Z);
+
+    private static GVec3 ToGodot(NVec3 value)
+        => new(value.X, value.Y, value.Z);
 }
