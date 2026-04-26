@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5072A3AB-8702-4A6F-9CB0-B9F56D566BE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astroblock.Core", "src\Core\Astroblock.Core.csproj", "{1C9FF041-0329-42FE-81EC-FB94131E3C84}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{F4BDEDC2-5F87-4BB2-8C77-4E12DA236340}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astroblock.UnitTests", "tests\Unit\Astroblock.UnitTests.csproj", "{3904E5F8-AE79-4851-88E6-3A913044AE14}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C9FF041-0329-42FE-81EC-FB94131E3C84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C9FF041-0329-42FE-81EC-FB94131E3C84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C9FF041-0329-42FE-81EC-FB94131E3C84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C9FF041-0329-42FE-81EC-FB94131E3C84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3904E5F8-AE79-4851-88E6-3A913044AE14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3904E5F8-AE79-4851-88E6-3A913044AE14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3904E5F8-AE79-4851-88E6-3A913044AE14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3904E5F8-AE79-4851-88E6-3A913044AE14}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1C9FF041-0329-42FE-81EC-FB94131E3C84} = {5072A3AB-8702-4A6F-9CB0-B9F56D566BE6}
+		{3904E5F8-AE79-4851-88E6-3A913044AE14} = {F4BDEDC2-5F87-4BB2-8C77-4E12DA236340}
+	EndGlobalSection
+EndGlobal
