@@ -56,4 +56,20 @@ public sealed class InMemoryChunkStoreTests
 
         Assert.False(removed);
     }
+
+    [Fact]
+    public void GetStoredChunkCoordsSnapshot_ReturnsExistingChunkCoordinates()
+    {
+        var store = new InMemoryChunkStore();
+        var a = CoordConverter.WorldToChunk(0, 0, 0);
+        var b = CoordConverter.WorldToChunk(-32, 64, 96);
+        store.SetChunk(a, new ChunkData());
+        store.SetChunk(b, new ChunkData());
+
+        var snapshot = store.GetStoredChunkCoordsSnapshot();
+
+        Assert.Contains(a, snapshot);
+        Assert.Contains(b, snapshot);
+        Assert.Equal(2, snapshot.Count);
+    }
 }

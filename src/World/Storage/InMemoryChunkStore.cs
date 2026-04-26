@@ -37,4 +37,7 @@ public sealed class InMemoryChunkStore : IChunkStore
 
     /// <inheritdoc/>
     public bool RemoveChunk(ChunkCoord3 coord) => chunks.Remove(coord);
+
+    /// <inheritdoc/>
+    public IReadOnlyCollection<ChunkCoord3> GetStoredChunkCoordsSnapshot() => chunks.Keys.ToArray();
 }
