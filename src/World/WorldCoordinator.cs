@@ -52,26 +52,23 @@ public sealed class WorldCoordinator
     public void Update(WorldAnchor anchor)
     {
         var desiredChunks = new HashSet<ChunkCoord3>(_chunkStreamer.ComputeDesiredSet(anchor, _streamingRadius));
+        var existingChunks = new HashSet<ChunkCoord3>(_chunkStore.GetStoredChunkCoordsSnapshot());
 
-        foreach (var coord in SortByCoord(desiredChunks))
-        {
-            if (_chunkStore.TryGetChunk(coord, out _))
-            {
-                continue;
-            }
-
-            var generatedChunk = _worldGenerator.Generate(coord, _worldSeed);
-            _chunkStore.SetChunk(coord, generatedChunk);
-            _eventPublisher?.Publish(new ChunkLoaded(coord));
-        }
-
-        var existingChunks = _chunkStore.GetStoredChunkCoordsSnapshot();
-        foreach (var coord in SortByCoord(existingChunks.Where(coord => !desiredChunks.Contains(coord))))
+        var toUnload = SortByCoord(existingChunks.Where(coord => !desiredChunks.Contains(coord)));
+        foreach (var coord in toUnload)
         {
             if (_chunkStore.RemoveChunk(coord))
             {
                 _eventPublisher?.Publish(new ChunkUnloaded(coord));
             }
+        }
+
+        var toLoad = SortByCoord(desiredChunks.Where(coord => !_chunkStore.TryGetChunk(coord, out _)));
+        foreach (var coord in toLoad)
+        {
+            var generatedChunk = _worldGenerator.Generate(coord, _worldSeed);
+            _chunkStore.SetChunk(coord, generatedChunk);
+            _eventPublisher?.Publish(new ChunkLoaded(coord));
         }
 
         // Extension point (future): move generation and eviction into async job queues,

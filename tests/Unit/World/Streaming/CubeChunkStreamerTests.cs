@@ -62,8 +62,8 @@ public sealed class CubeChunkStreamerTests
         Assert.True(store.TryGetChunk(secondChunk, out _));
         Assert.Collection(
             events.Events,
-            evt => Assert.Equal(new ChunkLoaded(secondChunk), evt),
-            evt => Assert.Equal(new ChunkUnloaded(firstChunk), evt));
+            evt => Assert.Equal(new ChunkUnloaded(firstChunk), evt),
+            evt => Assert.Equal(new ChunkLoaded(secondChunk), evt));
     }
 
     [Fact]

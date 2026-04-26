@@ -73,6 +73,29 @@ public sealed class WorldCoordinatorTests
         Assert.Equal(run1, run2);
     }
 
+    [Fact]
+    public void Update_BoundaryCrossing_UnloadEventsArePublishedBeforeLoadEvents()
+    {
+        var kept = ChunkCoord3.FromLongs(0, 0, 0);
+        var unloaded = ChunkCoord3.FromLongs(-2, 0, 0);
+        var loaded = ChunkCoord3.FromLongs(2, 0, 0);
+        var streamer = new StubChunkStreamer([kept, loaded]);
+        var store = new InMemoryChunkStore();
+        store.SetChunk(kept, new ChunkData());
+        store.SetChunk(unloaded, new ChunkData());
+
+        var generator = new RecordingWorldGenerator();
+        var events = new RecordingEventPublisher();
+        var coordinator = new WorldCoordinator(streamer, store, generator, 1, 8080, events);
+
+        coordinator.Update(new WorldAnchor(32, 0, 0));
+
+        Assert.Collection(
+            events.Events,
+            evt => Assert.Equal(new ChunkUnloaded(unloaded), evt),
+            evt => Assert.Equal(new ChunkLoaded(loaded), evt));
+    }
+
     private static IReadOnlyList<ChunkCoord3> RunGenerationAndCaptureOrder(IReadOnlyCollection<ChunkCoord3> desired)
     {
         var streamer = new StubChunkStreamer(desired);
