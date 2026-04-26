@@ -38,7 +38,7 @@ public partial class Main : Node3D
 
         _chunkStore = new InMemoryChunkStore();
         _eventBus = new InMemoryEventBus();
-        var worldGenerator = new SimpleNoiseWorldGenerator();
+        var worldGenerator = new SimplePlanetWorldGenerator();
         var chunkStreamer = new CubeChunkStreamer();
 
         _worldCoordinator = new WorldCoordinator(
