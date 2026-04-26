@@ -260,13 +260,84 @@ These names are suggestions and can evolve, but the separation of responsibiliti
 
 ---
 
-## 13. Development Workflow Expectations for Future Agents
+## 13. Locked Decisions (April 26, 2026)
 
-1. Respect module boundaries in this document.
-2. Add/modify interfaces before adding deep cross-module logic.
-3. Update this `PROJECT.md` when architecture decisions materially change.
-4. Add ADR entries in `/docs/adr` for major tradeoffs.
-5. Prefer incremental vertical slices over broad unfinished scaffolding.
+The following decisions are confirmed and should be treated as implementation constraints for the first build phase.
+
+### 13.1 Engine and Language
+
+- **Engine**: Godot 4 with C#.
+- **Language**: C#.
+
+### 13.2 First Playable Milestone (v0)
+
+Milestone is complete when the player can:
+
+1. Spawn on a large planet.
+2. Walk and interact with voxel terrain.
+3. Break and place blocks under prototype building rules.
+4. Unlock and use thrusters.
+5. Leave planetary gravity and navigate in near-zero gravity.
+
+> Save/load is explicitly out of scope for this first milestone.
+
+### 13.3 Art/Rendering Direction for Early Builds
+
+- Pipeline should support loading pixel-art assets (expected 16x16 or 32x32 style textures).
+- First runnable versions should prioritize **simple colored cubes** for speed of iteration.
+
+### 13.4 Player Start and Progression Context
+
+- Player starts on a **large planet**.
+- Early progression is planet-focused and includes work required to unlock space travel.
+
+### 13.5 Gravity and Movement Feel
+
+- Gravity transitions should be **arcade-smooth** (comfort and clarity over strict realism).
+- Thruster movement is a progression unlock and becomes the primary control method in near-zero gravity.
+
+### 13.6 Building Rules (Prototype)
+
+- Block placement/removal is allowed only:
+  - within a defined interaction range, and
+  - when attached to existing structure.
+- Prototype runs in no-resource-limits mode.
+- Systems should still preserve extension points for future inventory/resource costs.
+
+### 13.7 World Generation Scope (Initial)
+
+- Start with **simple noise-based body generation**.
+- More detailed/complex generation is deferred to later phases.
+
+### 13.8 Persistence and Compatibility (Early)
+
+- Prioritize fast local iteration over save compatibility.
+- Early save format breakage is acceptable during initial development.
+
+### 13.9 Multiplayer and Networking Constraint
+
+- Architecture must be **network-ready from day one**.
+- Early systems should avoid assumptions that only work in single-player.
+
+### 13.10 Target Platform/Input
+
+- Initial target is **PC keyboard + mouse only**.
+
+### 13.11 Modding Scope
+
+- No external mod support in early phases.
+- Maintain internal modularity and replaceable systems.
+
+### 13.12 Performance Target
+
+- Target: **60 FPS on the primary local development machine**.
+- Note: performance validation hardware is currently limited to that machine.
+
+### 13.13 Process Rules for Early Implementation
+
+- ADR documentation is **not required** for each major decision.
+- Core systems should follow a **test-first mindset** where practical.
+- CI should enforce **module boundary discipline** (prevent cross-module coupling drift).
 
 ---
 
@@ -304,13 +375,4 @@ This is the first task because every other system (generation, streaming, gravit
 2. Deterministic empty-space + simple asteroid generator.
 3. Streaming ring/cube around player anchor.
 4. Basic chunk lifecycle events.
-
----
-
-## 16. Open Questions (Track in ADRs)
-
-- Final chunk size (`16^3` vs `32^3` vs hybrid by LOD).
-- Gravity mass model per block type (uniform vs material density).
-- Preferred aggregation structure for far-field gravity (sparse octree vs hashed multi-resolution grid).
-- Floating-origin cadence and multiplayer implications.
 
