@@ -3,21 +3,20 @@ using Astroblock.Core.Coords;
 namespace Astroblock.World.Streaming;
 
 /// <summary>
-/// Computes desired chunk load sets around one or more world anchors.
+/// v0 chunk streaming policy contract.
+///
+/// Implementations are intentionally pure, side-effect free calculators that map
+/// an anchor + radius to the chunk set that should be resident.
+/// Future policies (LOD, frustum culling, prediction) can replace internals
+/// without changing callers that depend on this interface.
 /// </summary>
 public interface IChunkStreamer
 {
     /// <summary>
-    /// Produces a deterministic set of chunk coordinates that should be loaded for the provided anchor.
+    /// Computes the desired loaded chunk set for the provided world anchor.
     /// </summary>
-    /// <param name="anchorWorldX">Anchor world X coordinate in block units.</param>
-    /// <param name="anchorWorldY">Anchor world Y coordinate in block units.</param>
-    /// <param name="anchorWorldZ">Anchor world Z coordinate in block units.</param>
-    /// <param name="radiusInChunks">Streaming radius in chunks.</param>
-    /// <returns>Chunk coordinates to keep loaded.</returns>
-    IReadOnlyCollection<ChunkCoord3> ComputeDesiredLoadSet(
-        long anchorWorldX,
-        long anchorWorldY,
-        long anchorWorldZ,
-        int radiusInChunks);
+    /// <param name="anchor">Anchor expressed in world block coordinates.</param>
+    /// <param name="radius">Radius in chunks from the anchor chunk on each axis.</param>
+    /// <returns>Deterministic set of chunk coordinates to keep loaded.</returns>
+    IReadOnlyCollection<ChunkCoord3> ComputeDesiredSet(WorldAnchor anchor, int radius);
 }
