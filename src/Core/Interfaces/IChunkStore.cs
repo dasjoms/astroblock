@@ -38,4 +38,10 @@ public interface IChunkStore
     /// <param name="coord">Chunk coordinate key.</param>
     /// <returns><see langword="true"/> when an existing chunk was removed; otherwise <see langword="false"/>.</returns>
     bool RemoveChunk(ChunkCoord3 coord);
+
+    /// <summary>
+    /// Returns a snapshot of currently stored chunk coordinates.
+    /// </summary>
+    /// <returns>Stable coordinate snapshot for deterministic reconciliation passes.</returns>
+    IReadOnlyCollection<ChunkCoord3> GetStoredChunkCoordsSnapshot();
 }
