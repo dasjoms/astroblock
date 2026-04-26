@@ -28,6 +28,77 @@ public static class CoordConverter
         => (WorldToLocal(wx), WorldToLocal(wy), WorldToLocal(wz));
 
     /// <summary>
+    /// Converts chunk-space + chunk-local coordinates to world-space coordinates.
+    /// </summary>
+    /// <param name="cx">Chunk X index.</param>
+    /// <param name="cy">Chunk Y index.</param>
+    /// <param name="cz">Chunk Z index.</param>
+    /// <param name="lx">Local X coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <param name="ly">Local Y coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <param name="lz">Local Z coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <returns>The corresponding world-space coordinates.</returns>
+    /// <exception cref="System.ArgumentOutOfRangeException">
+    /// Thrown when any local axis is outside <c>[0, ChunkSize - 1]</c>.
+    /// </exception>
+    /// <exception cref="System.OverflowException">
+    /// Thrown when the resulting world coordinate does not fit in <see cref="int"/>.
+    /// </exception>
+    public static (int X, int Y, int Z) ChunkLocalToWorld(long cx, long cy, long cz, int lx, int ly, int lz)
+        => (
+            ChunkLocalToWorldAxis(cx, lx, nameof(lx)),
+            ChunkLocalToWorldAxis(cy, ly, nameof(ly)),
+            ChunkLocalToWorldAxis(cz, lz, nameof(lz)));
+
+    /// <summary>
+    /// Converts chunk-space + chunk-local coordinates to world-space coordinates.
+    /// </summary>
+    /// <param name="chunk">Chunk coordinates.</param>
+    /// <param name="lx">Local X coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <param name="ly">Local Y coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <param name="lz">Local Z coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <returns>The corresponding world-space coordinates.</returns>
+    public static (int X, int Y, int Z) ChunkLocalToWorld(ChunkCoord3 chunk, int lx, int ly, int lz)
+        => ChunkLocalToWorld(chunk.X, chunk.Y, chunk.Z, lx, ly, lz);
+
+    /// <summary>
+    /// Performs a round-trip conversion from world-space to chunk/local and back to world-space.
+    /// </summary>
+    /// <param name="wx">World X block coordinate.</param>
+    /// <param name="wy">World Y block coordinate.</param>
+    /// <param name="wz">World Z block coordinate.</param>
+    /// <returns>The world coordinates after round-trip conversion.</returns>
+    public static (int X, int Y, int Z) RoundTripWorldToChunkLocalToWorld(int wx, int wy, int wz)
+    {
+        var chunk = WorldToChunk(wx, wy, wz);
+        var local = WorldToLocal(wx, wy, wz);
+        return ChunkLocalToWorld(chunk, local.X, local.Y, local.Z);
+    }
+
+    /// <summary>
+    /// Performs a round-trip conversion from chunk/local to world and back to chunk/local.
+    /// </summary>
+    /// <param name="cx">Chunk X index.</param>
+    /// <param name="cy">Chunk Y index.</param>
+    /// <param name="cz">Chunk Z index.</param>
+    /// <param name="lx">Local X coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <param name="ly">Local Y coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <param name="lz">Local Z coordinate in <c>[0, ChunkSize - 1]</c>.</param>
+    /// <returns>The chunk and local coordinates after round-trip conversion.</returns>
+    public static (ChunkCoord3 Chunk, (int X, int Y, int Z) Local) RoundTripChunkLocalToWorldToChunkLocal(
+        long cx,
+        long cy,
+        long cz,
+        int lx,
+        int ly,
+        int lz)
+    {
+        var world = ChunkLocalToWorld(cx, cy, cz, lx, ly, lz);
+        var chunk = WorldToChunk(world.X, world.Y, world.Z);
+        var local = WorldToLocal(world.X, world.Y, world.Z);
+        return (chunk, local);
+    }
+
+    /// <summary>
     /// Converts a single world-space axis value into a chunk axis value using floor-division semantics.
     /// </summary>
     /// <remarks>
@@ -68,5 +139,27 @@ public static class CoordConverter
         }
 
         return local;
+    }
+
+    private static int ChunkLocalToWorldAxis(long chunkAxis, int localAxis, string axisName)
+    {
+        ValidateLocalAxis(localAxis, axisName);
+
+        checked
+        {
+            var worldAxis = (chunkAxis * ChunkConstants.ChunkSize) + localAxis;
+            return (int)worldAxis;
+        }
+    }
+
+    private static void ValidateLocalAxis(int localAxis, string axisName)
+    {
+        if (localAxis < 0 || localAxis >= ChunkConstants.ChunkSize)
+        {
+            throw new System.ArgumentOutOfRangeException(
+                axisName,
+                localAxis,
+                $"Local axis must be in range [0, {ChunkConstants.ChunkSize - 1}].");
+        }
     }
 }
