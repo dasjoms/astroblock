@@ -8,6 +8,9 @@
 
   <ItemGroup>
     <Compile Include="..\World\**\*.cs" />
+    <Compile Include="..\Gravity\**\*.cs" />
+    <Compile Include="..\Physics\**\*.cs" />
+    <Compile Include="..\Gameplay\**\*.cs" />
   </ItemGroup>
 
 </Project>
